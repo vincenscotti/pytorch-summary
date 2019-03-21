@@ -82,6 +82,7 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
     total_params = 0
     total_output = 0
     trainable_params = 0
+    csvline = ""
     for layer in summary:
         # input_shape, output_shape, trainable, nb_params
         line_new = "{:>20}  {:>25} {:>15}".format(
@@ -95,12 +96,23 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]
         print(line_new)
+        csvline_new = "{}|{}|{}|".format(
+            layer,
+            "{0:,}".format(summary[layer]["nb_params"]),
+            "{0:,}".format(np.prod(summary[layer]["output_shape"]))
+        )
+        csvline += csvline_new
+
 
     # assume 4 bytes/number (float on cuda).
     total_input_size = abs(np.prod(input_size) * batch_size * 4. / (1024 ** 2.))
     total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
     total_params_size = abs(total_params.numpy() * 4. / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
+    csvline = "{}|{}|{}".format(
+            "{0:,}".format(total_params),
+            "{0:,}".format(len(summary)),
+            csvline[:-1])
 
     print("================================================================")
     print("Total params: {0:,}".format(total_params))
@@ -112,4 +124,8 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
     print("Params size (MB): %0.2f" % total_params_size)
     print("Estimated Total Size (MB): %0.2f" % total_size)
     print("----------------------------------------------------------------")
+
+    print("CSV Summary:")
+    print(csvline)
+
     # return summary
